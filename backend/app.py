@@ -10,9 +10,11 @@ import json
 from openai import OpenAI
 from dotenv import load_dotenv
 from bson import ObjectId
+from flask_cors import CORS
 
 load_dotenv()
 app = Flask(__name__)
+CORS(app)
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)  # Extend token validity to 7 days
 

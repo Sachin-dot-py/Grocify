@@ -34,7 +34,7 @@ items_collection = db.items
 users_collection = db.users
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
-gpt_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+gpt_client = OpenAI(base_url="https://api.groq.com/openai/v1", api_key=os.getenv("GROK_API_KEY"))
 
 # BarcodeLookup API credentials
 BARCODE_LOOKUP_API_KEY = os.getenv("BARCODE_API_KEY")
@@ -193,10 +193,10 @@ def extract_info():
 
         # Use GPT to extract information
         response = gpt_client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="llama-3.2-90b-vision-preview",
             messages=[
                 {
-                    "role": "system",
+                   "role": "user",
                     "content": "Identify items in images and return structured information about them in a specified JSON format.\n\nWhen provided with an image of an item, your response should include:\n- The specific name of the item.\n- A list of common allergens or dietary restrictions the item contains.\n\n# Output Format\n\nRespond only in the following JSON format:\n{\n  \"item_name\": \"specific item name\",\n  \"allergens\": [\"list of common allergens or dietary restrictions\"]\n}\n\n# Notes\n\n- Ensure each field is correctly filled with relevant information based on the item in the image.\n- Include allergens if they are widely recognized and relevant to the item."
                 },
                 {
@@ -270,7 +270,7 @@ def generate_custom_recipe():
 
         # Use GPT-4o-mini to generate a custom recipe
         response = gpt_client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="mixtral-8x7b-32768",
             messages=[
                 {
                     "role": "system",
@@ -313,7 +313,7 @@ def generate_recipe():
 
         # Use GPT-4o-mini to generate a recipe
         response = gpt_client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="mixtral-8x7b-32768",
             messages=[
                 {
                     "role": "system",

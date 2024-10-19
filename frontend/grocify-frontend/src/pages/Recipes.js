@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Spinner, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Spinner, Alert, Modal, Form } from 'react-bootstrap';
 import axios from 'axios';
-import { FaRedo, FaPlusCircle } from 'react-icons/fa';
+import { FaRedo, FaPlusCircle, FaPenFancy, FaCheckCircle } from 'react-icons/fa';
 import './Recipes.css';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,6 +9,11 @@ const Recipes = () => {
   const [recipe, setRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showCustomRecipeModal, setShowCustomRecipeModal] = useState(false);
+  const [dietaryRestrictions, setDietaryRestrictions] = useState([]);
+  const [customCuisine, setCustomCuisine] = useState('');
+  const [specialRequests, setSpecialRequests] = useState('');
+  const [customCuisineOther, setCustomCuisineOther] = useState('');
   const navigate = useNavigate();
 
   const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
@@ -46,6 +51,49 @@ const Recipes = () => {
       } else {
         setError('Error fetching recipe. Please try again later.');
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCheckChange = (e, label) => {
+    setDietaryRestrictions(prev =>
+    e.target.checked ? [...prev, label] : prev.filter(item => item !== label)
+  );
+};
+
+  const handleCustomRecipeSubmit = async () => {
+    setLoading(true);
+    setShowCustomRecipeModal(false);
+    setError(null);
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('Unauthorized: Please log in again.');
+      }
+      // Fetch inventory items
+      const inventoryResponse = await axios.get(`${API_BASE_URL}/api/inventory`, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      const ingredients = inventoryResponse.data;
+
+      // Custom recipe parameters
+      const customRecipeData = {
+        ingredients,
+        dietary_restrictions: dietaryRestrictions,
+        cuisine: customCuisine === 'Other' ? customCuisineOther : customCuisine,
+        special_requests: specialRequests
+      };
+
+      // Call GPT-4o-mini API to generate a custom recipe
+      const recipeResponse = await axios.post(`${API_BASE_URL}/api/generate-custom-recipe`, customRecipeData, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+
+      setRecipe(recipeResponse.data);
+    } catch (err) {
+      console.error('Error fetching custom recipe:', err);
+      setError('Error fetching custom recipe. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -111,11 +159,78 @@ const Recipes = () => {
                     <FaRedo className="mr-2" /> Generate New Recipe
                   </Button>
                 </div>
+                <div className="text-center mt-3">
+                  <Button variant="success" onClick={() => setShowCustomRecipeModal(true)} className="custom-recipe-button">
+                    <FaPenFancy className="mr-2" /> Craft Your Own Recipe
+                  </Button>
+                </div>
               </Card.Body>
             </Card>
           )}
         </Col>
       </Row>
+
+      {/* Custom Recipe Modal */}
+      <Modal show={showCustomRecipeModal} onHide={() => setShowCustomRecipeModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Craft Your Own Recipe</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group controlId="dietaryRestrictions">
+              <Form.Label>Dietary Restrictions</Form.Label>
+              <Form.Check type="checkbox" label="Vegetarian" onChange={(e) => handleCheckChange(e, 'Vegetarian')} id="vegetarian" />
+              <Form.Check type="checkbox" label="Vegan" onChange={(e) => handleCheckChange(e, 'Vegan')} id="vegan" />
+              <Form.Check type="checkbox" label="Gluten-Free" onChange={(e) => handleCheckChange(e, 'Gluten-Free')} id="glutenFree" />
+              <Form.Check type="checkbox" label="Dairy-Free" onChange={(e) => handleCheckChange(e, 'Dairy-Free')} id="dairyFree" />
+              <Form.Check type="checkbox" label="Nut-Free" onChange={(e) => handleCheckChange(e, 'Nut-Free')} id="nutFree" />
+              <Form.Control
+                type="text"
+                placeholder="Other dietary restrictions"
+                className="mt-2"
+                onChange={(e) => setDietaryRestrictions([...dietaryRestrictions, e.target.value])}
+              />
+            </Form.Group>
+            <Form.Group controlId="cuisine">
+              <Form.Label>Preferred Cuisine</Form.Label>
+              <Form.Control as="select" value={customCuisine} onChange={(e) => setCustomCuisine(e.target.value)}>
+                <option>Italian</option>
+                <option>Mexican</option>
+                <option>Indian</option>
+                <option>Chinese</option>
+                <option>American</option>
+                <option>Other</option>
+              </Form.Control>
+              {customCuisine === 'Other' && (
+                <Form.Control
+                  type="text"
+                  placeholder="Specify other cuisine"
+                  className="mt-2"
+                  onChange={(e) => setCustomCuisineOther(e.target.value)}
+                />
+              )}
+            </Form.Group>
+            <Form.Group controlId="specialRequests">
+              <Form.Label>Special Requests</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                placeholder="Any special requests or preferences?"
+                value={specialRequests}
+                onChange={(e) => setSpecialRequests(e.target.value)}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowCustomRecipeModal(false)}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={handleCustomRecipeSubmit}>
+            <FaCheckCircle className="mr-2" /> Generate Custom Recipe
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 };

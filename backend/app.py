@@ -253,7 +253,54 @@ def get_inventory():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
-# Route to generate recipe using GPT-4o-mini
+# Route to generate custom recipe using GPT-4o-mini
+@app.route('/api/generate-custom-recipe', methods=['POST'])
+@jwt_required()
+def generate_custom_recipe():
+    try:
+        data = request.json
+        ingredients = data.get('ingredients')
+        dietary_restrictions = data.get('dietary_restrictions', [])
+        cuisine = data.get('cuisine', '')
+        special_requests = data.get('special_requests', '')
+
+        if not ingredients:
+            return jsonify({'error': 'No ingredients provided'}), 400
+
+        # Update prompt to include dietary restrictions, cuisine, and special requests
+        system_content = "Take an input in a JSON format containing a list of ingredients with properties: item_name, quantity, unit, and expiry_date.\nGenerate a recipe that can be made with these ingredients.\n\nTo create a recipe:\n- Minimize the use of ingredients not already available.\n- Prioritize using ingredients with upcoming expiry dates.\n- Ensure recipes are specific and not vague.\nConsider the following user preferences:\n" + f"- Dietary Restrictions: {', '.join(dietary_restrictions)}\n" + f"- Preferred Cuisine: {cuisine}\n" + f"- Special Requests: {special_requests}\n" + "# Steps\n\n1. Analyze the list of available ingredients, focusing on those nearing expiry.\n2. Identify potential recipes that can be made with the given ingredients.\n3. Evaluate how well the available ingredients fit the chosen recipe, considering substitutions if needed.\n4. Ensure the recipe strictly complies with all the user's preferences.\n5. Clearly outline the recipe with all required steps and quantities.\n6. List any additional ingredients needed with the quantity required.\n\n# Output Format\n\nThe output should be a JSON object with the following structure:\n- recipe_name: A descriptive name for the recipe.\n- description: A brief description of the recipe.\n- ingredients: An array of objects, each with item_name, quantity, and unit.\n- steps: An array of strings, each a step in the preparation process.\n- missing_ingredients: An array of objects, each with item_name, quantity, and unit, detailing ingredients not available."
+
+        # Use GPT-4o-mini to generate a custom recipe
+        response = gpt_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_content
+                },
+                {
+                    "role": "user",
+                    "content": json.dumps(ingredients)
+                }
+            ],
+            temperature=1,
+            max_tokens=2048,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            response_format={"type": "json_object"}
+        )
+
+        if response and response.choices:
+            recipe_data = response.choices[0].message.content.strip()
+            print(recipe_data)
+            recipe_json = json.loads(recipe_data)
+            return jsonify(recipe_json), 200
+        else:
+            return jsonify({'error': 'Failed to generate custom recipe'}), 500
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 @app.route('/api/generate-recipe', methods=['POST'])
 @jwt_required()
 def generate_recipe():

@@ -1,0 +1,77 @@
+/* Recipes.css */
+
+.recipe-container {
+    padding: 20px;
+    background-color: #f8f9fa;
+  }
+  
+  .recipe-card {
+    border: none;
+    border-radius: 15px;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  
+  .recipe-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  }
+  
+  .recipe-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #343a40;
+    margin-bottom: 15px;
+  }
+  
+  .recipe-summary {
+    font-size: 1.2rem;
+    color: #6c757d;
+    margin-bottom: 30px;
+  }
+  
+  .ingredients-heading,
+  .steps-heading,
+  .missing-heading {
+    font-weight: bold;
+    color: #007bff;
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+  
+  .ingredients-list,
+  .steps-list,
+  .missing-ingredients ul {
+    list-style-type: none;
+    padding-left: 0;
+    font-size: 1rem;
+    color: #495057;
+  }
+  
+  .ingredients-list li,
+  .steps-list li,
+  .missing-ingredients ul li {
+    margin-bottom: 10px;
+  }
+  
+  .generate-again-button {
+    padding: 10px 20px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+  }
+  
+  .generate-again-button:hover {
+    background-color: #0056b3;
+  }
+  
+  .text-center {
+    text-align: center;
+  }
+  
+  .mt-5 {
+    margin-top: 3rem;
+  }
+  
+  .mb-5 {
+    margin-bottom: 3rem;
+  }
+  

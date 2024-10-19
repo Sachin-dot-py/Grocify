@@ -1,0 +1,21 @@
+.button-group {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+  }
+  
+  .webcam-view {
+    width: 100%;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .modal-image {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+  

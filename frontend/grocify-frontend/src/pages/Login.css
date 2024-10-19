@@ -1,0 +1,32 @@
+.login-container {
+    background: linear-gradient(to bottom right, #74b9ff, #a29bfe);
+    padding: 0;
+}
+
+.card {
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.card-title {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 700;
+}
+
+.btn-link {
+    color: #6c757d;
+}
+
+.btn-link:hover {
+    color: #343a40;
+    text-decoration: none;
+}
+
+.alert-danger {
+    font-weight: bold;
+}
+
+input::placeholder {
+    color: #a1a1a1;
+    font-style: italic;
+}

@@ -1,0 +1,89 @@
+/* Inventory.css */
+
+.inventory-container {
+    padding: 20px;
+    background-color: #f8f9fa;
+  }
+  
+  .inventory-title {
+    font-weight: bold;
+    color: #343a40;
+  }
+  
+  .add-item-button {
+    background-color: #007bff;
+    border: none;
+    padding: 10px 20px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+  }
+  
+  .add-item-button:hover {
+    background-color: #0056b3;
+  }
+  
+  .inventory-card {
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  
+  .inventory-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  }
+  
+  .inventory-image {
+    height: 200px;
+    object-fit: cover;
+  }
+  
+  .edit-button, .delete-button {
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  .edit-button:hover {
+    background-color: #17a2b8;
+    color: white;
+  }
+  
+  .delete-button:hover {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .badge-danger {
+    background-color: #ff4d4f;
+    color: white;
+  }
+  
+  .badge-warning {
+    background-color: #ffc107;
+    color: white;
+  }
+  
+  .badge-info {
+    background-color: #17a2b8;
+    color: white;
+  }
+  
+  .badge-success {
+    background-color: #28a745;
+    color: white;
+  }
+  
+  .text-muted {
+    font-size: 0.9rem;
+  }
+  
+  .progress-bar {
+    height: 1.5rem;
+    font-weight: bold;
+  }
+  
+  .mt-auto {
+    margin-top: auto;
+  }
+  
+  .spinner {
+    margin-top: 30px;
+  }
+  

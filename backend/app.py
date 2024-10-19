@@ -172,6 +172,65 @@ def add_item():
 
     return jsonify({'message': 'Item added successfully'}), 201
 
+# Route to extract item information from an image
+@app.route('/api/extract-info', methods=['POST'])
+@jwt_required()
+def extract_info():
+    try:
+        data = request.json
+        image_data = data.get('image')
+
+        if not image_data:
+            return jsonify({'error': 'No image provided'}), 400
+
+        img_type = image_data.split(';')[0].split(':')[1]
+
+        # Decode the image data
+        image_bytes = base64.b64decode(image_data.split(',')[1])
+
+        # Convert image bytes to base64 string
+        image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+
+        # Use GPT to extract information
+        response = gpt_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Identify items in images and return structured information about them in a specified JSON format. \n\nWhen provided with an image of an item, your response should include:\n- The specific name of the item.\n- The quantity of the item.\n- The unit for the quantity, using standard metrics.\n- A list of common allergens or dietary restrictions the item contains.\n\n# Output Format\n\nRespond only in the following JSON format:\n{\n  \"item_name\": \"specific item name\",\n  \"quantity\": quantity_value,\n  \"unit\": \"unit for the quantity\",\n  \"allergens\": [\"list of common allergens or dietary restrictions\"]\n}\n\n# Notes\n\n- Ensure each field is correctly filled with relevant information based on the item in the image.\n- Use appropriate and standardized units for quantities when applicable.\n- Include allergens if they are widely recognized and relevant to the item."
+                },
+                {
+                    "role": "user",
+                    # "content": f"Image data in base64 format: {image_base64}",
+                    "content": [
+                        {"type": "text", "text": "Image"},
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:{img_type};base64,{image_base64}"},
+                        },
+                    ],
+                }
+            ],
+            temperature=0.2,
+            max_tokens=100,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            response_format={"type": "json_object"},
+        )
+        print(response)
+        if response and response.choices:
+            item_info = response.choices[0].message.content.strip()
+            item_info_json = json.loads(item_info)
+        else:
+            return jsonify({'error': 'No valid response from GPT'}), 500
+
+        return jsonify(item_info_json), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # Route to fetch inventory items
 @app.route('/api/inventory', methods=['GET'])
 @jwt_required()

@@ -5,3 +5,4 @@ flask_jwt_extended
 requests
 openai
 python-dotenv
+flask-cors

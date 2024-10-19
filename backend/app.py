@@ -4,7 +4,6 @@ import requests
 from pymongo import MongoClient
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, set_access_cookies, unset_jwt_cookies
-import base64
 import json
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -196,6 +195,49 @@ def get_inventory():
                 "image": item["image"]
             })
         return jsonify(inventory_list), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+# Route to generate recipe using GPT-4o-mini
+@app.route('/api/generate-recipe', methods=['POST'])
+@jwt_required()
+def generate_recipe():
+    try:
+        data = request.json
+        ingredients = data.get('ingredients')
+
+        if not ingredients:
+            return jsonify({'error': 'No ingredients provided'}), 400
+
+        # Use GPT-4o-mini to generate a recipe
+        response = gpt_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Take an input in a JSON format containing a list of ingredients with properties: item_name, quantity, unit, and expiry_date. Generate a recipe that can be made with these ingredients. \n\nTo create a recipe:\n- Minimize the use of ingredients not already available.\n- Prioritize using ingredients with upcoming expiry dates.\n- Ensure recipes are specific and not vague.\n\n# Steps\n\n1. Analyze the list of available ingredients, focusing on those nearing expiry.\n2. Identify potential recipes that can be made with the given ingredients.\n3. Evaluate how well the available ingredients fit the chosen recipe, considering substitutions if needed.\n4. Clearly outline the recipe with all required steps and quantities.\n5. List any additional ingredients needed with the quantity required.\n\n# Output Format\n\nThe output should be a JSON object with the following structure:\n- recipe_name: A descriptive name for the recipe.\n- description: A brief description of the recipe.\n- ingredients: An array of objects, each with item_name, quantity, and unit.\n- steps: An array of strings, each a step in the preparation process.\n- missing_ingredients: An array of objects, each with item_name, quantity, and unit, detailing ingredients not available."
+                },
+                {
+                    "role": "user",
+                    "content": json.dumps(ingredients)
+                }
+            ],
+            temperature=1,
+            max_tokens=2048,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            response_format={"type": "json_object"}
+        )
+
+        if response and response.choices:
+            recipe_data = response.choices[0].message.content.strip()
+            recipe_json = json.loads(recipe_data)
+            return jsonify(recipe_json), 200
+        else:
+            return jsonify({'error': 'Failed to generate recipe'}), 500
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500

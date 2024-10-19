@@ -253,7 +253,6 @@ def get_inventory():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
-<<<<<<< Updated upstream
 # Route to generate custom recipe using GPT-4o-mini
 @app.route('/api/generate-custom-recipe', methods=['POST'])
 @jwt_required()
@@ -302,6 +301,7 @@ def generate_custom_recipe():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 @app.route('/api/generate-recipe', methods=['POST'])
 @jwt_required()
 def generate_recipe():
@@ -343,7 +343,7 @@ def generate_recipe():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-=======
+
 @app.route('/api/inventory/<item_id>', methods=['DELETE'])
 @jwt_required()
 def delete_item(item_id):
@@ -362,7 +362,6 @@ def delete_item(item_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
->>>>>>> Stashed changes
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000)

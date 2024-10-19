@@ -105,7 +105,7 @@ function Header() {
                     <Nav.Link as={Link} to="/">Home</Nav.Link>
                     <Nav.Link as={Link} to="/inventory">Inventory</Nav.Link>
                     <Nav.Link as={Link} to="/recipes">Recipes</Nav.Link>
-                    <Nav.Link as={Link} to="/add-item">Add Item</Nav.Link>
+                    <Nav.Link as={Link} to="/add-item">Add Groceries</Nav.Link>
                 </Nav>
                 {isLoggedIn && username ? (
                     <div className="d-flex align-items-center ml-auto" style={{ position: 'absolute', right: '20px' }}>

@@ -3,21 +3,16 @@ import os
 import requests
 from pymongo import MongoClient
 from flask_bcrypt import Bcrypt
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, set_access_cookies, unset_jwt_cookies
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+import base64
 import json
 from openai import OpenAI
 from dotenv import load_dotenv
 from bson import ObjectId
-from datetime import timedelta
-from flask_cors import CORS
 
 load_dotenv()
 app = Flask(__name__)
-CORS(app, supports_credentials=True)
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)  # Set token expiry to 7 days
-app.config["JWT_TOKEN_LOCATION"] = ["cookies"]  # Store JWT in cookies
-app.config["JWT_COOKIE_CSRF_PROTECT"] = False
 
 # Custom JSON encoder to handle ObjectId
 class JSONEncoder(json.JSONEncoder):
@@ -37,6 +32,7 @@ bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 gpt_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+
 # BarcodeLookup API credentials
 BARCODE_LOOKUP_API_KEY = os.getenv("BARCODE_API_KEY")
 BARCODE_LOOKUP_API_URL = "https://api.barcodelookup.com/v3/products"
@@ -47,7 +43,6 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
 
 # User registration
@@ -82,19 +77,11 @@ def login():
     user = users_collection.find_one({'username': username})
     if user and bcrypt.check_password_hash(user['password'], password):
         access_token = create_access_token(identity=username)
-        response = jsonify({'message': 'Login successful'})
-        set_access_cookies(response, access_token)
-        return response, 200
+        return jsonify({'access_token': access_token}), 200
     else:
         return jsonify({'error': 'Invalid credentials'}), 401
+    
 
-# User logout
-@app.route('/api/logout', methods=['POST'])
-@jwt_required()
-def logout():
-    response = jsonify({'message': 'User logged out successfully'})
-    unset_jwt_cookies(response)
-    return response, 200
 
 # Route to fetch user information
 @app.route('/api/user-info', methods=['GET'])
@@ -177,6 +164,64 @@ def add_item():
 
     return jsonify({'message': 'Item added successfully'}), 201
 
+# Route to extract item information from an image
+@app.route('/api/extract-info', methods=['POST'])
+@jwt_required()
+def extract_info():
+    try:
+        data = request.json
+        image_data = data.get('image')
+
+        if not image_data:
+            return jsonify({'error': 'No image provided'}), 400
+
+        img_type = image_data.split(';')[0].split(':')[1]
+
+        # Decode the image data
+        image_bytes = base64.b64decode(image_data.split(',')[1])
+
+        # Convert image bytes to base64 string
+        image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+
+        # Use GPT to extract information
+        response = gpt_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Identify items in images and return structured information about them in a specified JSON format. \n\nWhen provided with an image of an item, your response should include:\n- The specific name of the item.\n- The quantity of the item.\n- The unit for the quantity, using standard metrics.\n- A list of common allergens or dietary restrictions the item contains.\n\n# Output Format\n\nRespond only in the following JSON format:\n{\n  \"item_name\": \"specific item name\",\n  \"quantity\": quantity_value,\n  \"unit\": \"unit for the quantity\",\n  \"allergens\": [\"list of common allergens or dietary restrictions\"]\n}\n\n# Notes\n\n- Ensure each field is correctly filled with relevant information based on the item in the image.\n- Use appropriate and standardized units for quantities when applicable.\n- Include allergens if they are widely recognized and relevant to the item."
+                },
+                {
+                    "role": "user",
+                    # "content": f"Image data in base64 format: {image_base64}",
+                    "content": [
+                        {"type": "text", "text": "Image"},
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:{img_type};base64,{image_base64}"},
+                        },
+                    ],
+                }
+            ],
+            temperature=0.2,
+            max_tokens=100,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            response_format={"type": "json_object"},
+        )
+        print(response)
+        if response and response.choices:
+            item_info = response.choices[0].message.content.strip()
+            item_info_json = json.loads(item_info)
+        else:
+            return jsonify({'error': 'No valid response from GPT'}), 500
+
+        return jsonify(item_info_json), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # Route to fetch inventory items
 @app.route('/api/inventory', methods=['GET'])
 @jwt_required()
@@ -195,49 +240,6 @@ def get_inventory():
                 "image": item["image"]
             })
         return jsonify(inventory_list), 200
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    
-
-# Route to generate recipe using GPT-4o-mini
-@app.route('/api/generate-recipe', methods=['POST'])
-@jwt_required()
-def generate_recipe():
-    try:
-        data = request.json
-        ingredients = data.get('ingredients')
-
-        if not ingredients:
-            return jsonify({'error': 'No ingredients provided'}), 400
-
-        # Use GPT-4o-mini to generate a recipe
-        response = gpt_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "Take an input in a JSON format containing a list of ingredients with properties: item_name, quantity, unit, and expiry_date. Generate a recipe that can be made with these ingredients. \n\nTo create a recipe:\n- Minimize the use of ingredients not already available.\n- Prioritize using ingredients with upcoming expiry dates.\n- Ensure recipes are specific and not vague.\n\n# Steps\n\n1. Analyze the list of available ingredients, focusing on those nearing expiry.\n2. Identify potential recipes that can be made with the given ingredients.\n3. Evaluate how well the available ingredients fit the chosen recipe, considering substitutions if needed.\n4. Clearly outline the recipe with all required steps and quantities.\n5. List any additional ingredients needed with the quantity required.\n\n# Output Format\n\nThe output should be a JSON object with the following structure:\n- recipe_name: A descriptive name for the recipe.\n- description: A brief description of the recipe.\n- ingredients: An array of objects, each with item_name, quantity, and unit.\n- steps: An array of strings, each a step in the preparation process.\n- missing_ingredients: An array of objects, each with item_name, quantity, and unit, detailing ingredients not available."
-                },
-                {
-                    "role": "user",
-                    "content": json.dumps(ingredients)
-                }
-            ],
-            temperature=1,
-            max_tokens=2048,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0,
-            response_format={"type": "json_object"}
-        )
-
-        if response and response.choices:
-            recipe_data = response.choices[0].message.content.strip()
-            recipe_json = json.loads(recipe_data)
-            return jsonify(recipe_json), 200
-        else:
-            return jsonify({'error': 'Failed to generate recipe'}), 500
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500

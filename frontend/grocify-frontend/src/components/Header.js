@@ -20,8 +20,7 @@ function Header() {
 
     const fetchUserInfo = (token) => {
         axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/user-info`, {
-            headers: { Authorization: `Bearer ${token}` },
-            withCredentials: true
+            headers: { Authorization: `Bearer ${token}` }
         })
         .then(response => {
             setUsername(response.data.username);
@@ -35,19 +34,10 @@ function Header() {
     };
 
     const handleLogout = () => {
-        axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/logout`, {}, {
-            withCredentials: true,
-            headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` }
-        })
-        .then(() => {
-            localStorage.removeItem('access_token');
-            setIsLoggedIn(false);
-            setUsername(null);
-            navigate('/');
-        })
-        .catch(error => {
-            console.error('Error logging out:', error);
-        });
+        localStorage.removeItem('access_token');
+        setIsLoggedIn(false);
+        setUsername(null);
+        navigate('/');
     };
 
     useEffect(() => {

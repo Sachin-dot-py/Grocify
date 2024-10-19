@@ -4,7 +4,7 @@ import { Card, Button, Container, Row, Col, Spinner, Alert, Modal, Form, Toast }
 import Webcam from 'react-webcam';
 import Quagga from 'quagga'; // Barcode scanning library
 import axios from 'axios';
-import { FaCamera, FaBarcode, FaTimes, FaCheckCircle } from 'react-icons/fa';
+import { FaCamera, FaBarcode, FaTimes, FaCheckCircle, FaPlus } from 'react-icons/fa';
 import './AddItem.css';
 
 const AddItem = () => {
@@ -201,7 +201,7 @@ const AddItem = () => {
             <FaTimes style={{ marginRight: '5px' }} /> Cancel
           </Button>
           <Button variant="success" onClick={handleAddItem} className="d-flex align-items-center">
-            Add Item
+          <FaPlus style={{ marginRight: '5px' }} /> Add Item
           </Button>
         </Modal.Footer>
       </Modal>

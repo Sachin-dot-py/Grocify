@@ -257,6 +257,7 @@ def generate_custom_recipe():
     try:
         data = request.json
         ingredients = data.get('ingredients')
+        ingredients = [{"item_name": item["item_name"], "expiry_date": item["expiry_date"]} for item in ingredients]
         dietary_restrictions = data.get('dietary_restrictions', [])
         cuisine = data.get('cuisine', '')
         special_requests = data.get('special_requests', '')
@@ -305,6 +306,7 @@ def generate_recipe():
     try:
         data = request.json
         ingredients = data.get('ingredients')
+        ingredients = [{"item_name": item["item_name"], "expiry_date": item["expiry_date"]} for item in ingredients]
 
         if not ingredients:
             return jsonify({'error': 'No ingredients provided'}), 400

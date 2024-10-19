@@ -18,6 +18,14 @@ const Recipes = () => {
 
   const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
+  // Authentication required
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      navigate('/login');
+    }
+  }, []);
+  
   useEffect(() => {
     fetchRecipe();
   }, []);

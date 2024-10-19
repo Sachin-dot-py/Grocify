@@ -18,6 +18,7 @@ const Login = () => {
       try {
         const response = await axios.post(`${API_BASE_URL}/api/login`, { username, password });
         localStorage.setItem('access_token', response.data.access_token);
+        localStorage.setItem('refresh_token', response.data.refresh_token);  // Save refresh token
         window.dispatchEvent(new Event("storage")); // Trigger storage event to update login state
         navigate('/');
       } catch (error) {

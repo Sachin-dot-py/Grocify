@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Navbar, Nav, Button, Dropdown } from 'react-bootstrap';
+import { Navbar, Nav, Button } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaSignInAlt, FaUserCircle, FaSignOutAlt } from 'react-icons/fa';
 import axios from 'axios';
@@ -18,23 +18,47 @@ function Header() {
         }
     }, []);
 
-    const fetchUserInfo = (token) => {
-        axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/user-info`, {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-        .then(response => {
+    const fetchUserInfo = async (token) => {
+        try {
+            const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/user-info`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setUsername(response.data.username);
             setIsLoggedIn(true);
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error fetching user information:', error);
-            localStorage.removeItem('access_token');
-            setIsLoggedIn(false);
-        });
+            if (error.response && error.response.status === 401) {
+                handleRefreshToken();
+            } else {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                setIsLoggedIn(false);
+            }
+        }
+    };
+
+    const handleRefreshToken = async () => {
+        try {
+            const refreshToken = localStorage.getItem('refresh_token');
+            if (refreshToken) {
+                const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/refresh`, {}, {
+                    headers: { Authorization: `Bearer ${refreshToken}` }
+                });
+                const newAccessToken = response.data.access_token;
+                localStorage.setItem('access_token', newAccessToken);
+                fetchUserInfo(newAccessToken);
+            } else {
+                handleLogout();
+            }
+        } catch (error) {
+            console.error('Refresh token expired or invalid', error);
+            handleLogout();
+        }
     };
 
     const handleLogout = () => {
         localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
         setIsLoggedIn(false);
         setUsername(null);
         navigate('/');

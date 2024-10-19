@@ -253,6 +253,7 @@ def get_inventory():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
+<<<<<<< Updated upstream
 # Route to generate custom recipe using GPT-4o-mini
 @app.route('/api/generate-custom-recipe', methods=['POST'])
 @jwt_required()
@@ -342,6 +343,26 @@ def generate_recipe():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+=======
+@app.route('/api/inventory/<item_id>', methods=['DELETE'])
+@jwt_required()
+def delete_item(item_id):
+    try:
+        # Convert item_id to ObjectId
+        item_id = ObjectId(item_id)
+        current_user = get_jwt_identity()
+        
+        # Find and delete the item for the current user
+        result = items_collection.delete_one({'_id': item_id, 'username': current_user})
+        
+        if result.deleted_count == 1:
+            return jsonify({'message': 'Item deleted successfully'}), 200
+        else:
+            return jsonify({'error': 'Item not found or unauthorized access'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+>>>>>>> Stashed changes
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000)

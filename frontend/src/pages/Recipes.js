@@ -202,6 +202,7 @@ const Recipes = () => {
             <Form.Group controlId="cuisine">
               <Form.Label>Preferred Cuisine</Form.Label>
               <Form.Control as="select" value={customCuisine} onChange={(e) => setCustomCuisine(e.target.value)}>
+                <option>Any</option>
                 <option>Italian</option>
                 <option>Mexican</option>
                 <option>Indian</option>

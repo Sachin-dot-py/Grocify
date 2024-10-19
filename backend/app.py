@@ -166,8 +166,6 @@ def add_item():
         'barcode': barcode,
         'item_name': name,
         'image': image,
-        'quantity': 1,
-        'unit': 'piece',
         'expiry_date': expiry_date
     }
     items_collection.insert_one(item)
@@ -199,11 +197,10 @@ def extract_info():
             messages=[
                 {
                     "role": "system",
-                    "content": "Identify items in images and return structured information about them in a specified JSON format. \n\nWhen provided with an image of an item, your response should include:\n- The specific name of the item.\n- The quantity of the item.\n- The unit for the quantity, using standard metrics.\n- A list of common allergens or dietary restrictions the item contains.\n\n# Output Format\n\nRespond only in the following JSON format:\n{\n  \"item_name\": \"specific item name\",\n  \"quantity\": quantity_value,\n  \"unit\": \"unit for the quantity\",\n  \"allergens\": [\"list of common allergens or dietary restrictions\"]\n}\n\n# Notes\n\n- Ensure each field is correctly filled with relevant information based on the item in the image.\n- Use appropriate and standardized units for quantities when applicable.\n- Include allergens if they are widely recognized and relevant to the item."
+                    "content": "Identify items in images and return structured information about them in a specified JSON format.\n\nWhen provided with an image of an item, your response should include:\n- The specific name of the item.\n- A list of common allergens or dietary restrictions the item contains.\n\n# Output Format\n\nRespond only in the following JSON format:\n{\n  \"item_name\": \"specific item name\",\n  \"allergens\": [\"list of common allergens or dietary restrictions\"]\n}\n\n# Notes\n\n- Ensure each field is correctly filled with relevant information based on the item in the image.\n- Include allergens if they are widely recognized and relevant to the item."
                 },
                 {
                     "role": "user",
-                    # "content": f"Image data in base64 format: {image_base64}",
                     "content": [
                         {"type": "text", "text": "Image"},
                         {
@@ -245,8 +242,6 @@ def get_inventory():
             inventory_list.append({
                 "_id": str(item["_id"]),
                 "item_name": item["item_name"],
-                "quantity": item["quantity"],
-                "unit": item["unit"],
                 "expiry_date": item["expiry_date"],
                 "image": item["image"]
             })
@@ -270,7 +265,7 @@ def generate_custom_recipe():
             return jsonify({'error': 'No ingredients provided'}), 400
 
         # Update prompt to include dietary restrictions, cuisine, and special requests
-        system_content = "Take an input in a JSON format containing a list of ingredients with properties: item_name, quantity, unit, and expiry_date.\nGenerate a recipe that can be made with these ingredients.\n\nTo create a recipe:\n- Minimize the use of ingredients not already available.\n- Prioritize using ingredients with upcoming expiry dates.\n- Ensure recipes are specific and not vague.\nConsider the following user preferences:\n" + f"- Dietary Restrictions: {', '.join(dietary_restrictions)}\n" + f"- Preferred Cuisine: {cuisine}\n" + f"- Special Requests: {special_requests}\n" + "# Steps\n\n1. Analyze the list of available ingredients, focusing on those nearing expiry.\n2. Identify potential recipes that can be made with the given ingredients.\n3. Evaluate how well the available ingredients fit the chosen recipe, considering substitutions if needed.\n4. Ensure the recipe strictly complies with all the user's preferences.\n5. Clearly outline the recipe with all required steps and quantities.\n6. List any additional ingredients needed with the quantity required.\n\n# Output Format\n\nThe output should be a JSON object with the following structure:\n- recipe_name: A descriptive name for the recipe.\n- description: A brief description of the recipe.\n- ingredients: An array of objects, each with item_name, quantity, and unit.\n- steps: An array of strings, each a step in the preparation process.\n- missing_ingredients: An array of objects, each with item_name, quantity, and unit, detailing ingredients not available."
+        system_content = "Take an input in a JSON format containing a list of ingredients with properties: item_name and expiry_date.\nGenerate a recipe that can be made with these ingredients.\n\nTo create a recipe:\n- Minimize the use of ingredients not already available.\n- Prioritize using ingredients with upcoming expiry dates.\n- Ensure recipes are specific and not vague.\nConsider the following user preferences:\n" + f"- Dietary Restrictions: {', '.join(dietary_restrictions)}\n" + f"- Preferred Cuisine: {cuisine}\n" + f"- Special Requests: {special_requests}\n" + "# Steps\n\n1. Analyze the list of available ingredients, focusing on those nearing expiry.\n2. Identify potential recipes that can be made with the given ingredients.\n3. Evaluate how well the available ingredients fit the chosen recipe, considering substitutions if needed.\n4. Ensure the recipe strictly complies with all the user's preferences.\n5. Clearly outline the recipe with all required steps and quantities.\n6. List any additional ingredients needed with the quantity required.\n\n# Output Format\n\nThe output should be a JSON object with the following structure:\n- recipe_name: A descriptive name for the recipe.\n- description: A brief description of the recipe.\n- ingredients: An array of objects, each with item_name, quantity, and unit.\n- steps: An array of strings, each a step in the preparation process.\n- missing_ingredients: An array of objects, each with item_name, quantity, and unit, detailing ingredients not available."
 
         # Use GPT-4o-mini to generate a custom recipe
         response = gpt_client.chat.completions.create(
@@ -320,7 +315,7 @@ def generate_recipe():
             messages=[
                 {
                     "role": "system",
-                    "content": "Take an input in a JSON format containing a list of ingredients with properties: item_name, quantity, unit, and expiry_date. Generate a recipe that can be made with these ingredients. \n\nTo create a recipe:\n- Minimize the use of ingredients not already available.\n- Prioritize using ingredients with upcoming expiry dates.\n- Ensure recipes are specific and not vague.\n\n# Steps\n\n1. Analyze the list of available ingredients, focusing on those nearing expiry.\n2. Identify potential recipes that can be made with the given ingredients.\n3. Evaluate how well the available ingredients fit the chosen recipe, considering substitutions if needed.\n4. Clearly outline the recipe with all required steps and quantities.\n5. List any additional ingredients needed with the quantity required.\n\n# Output Format\n\nThe output should be a JSON object with the following structure:\n- recipe_name: A descriptive name for the recipe.\n- description: A brief description of the recipe.\n- ingredients: An array of objects, each with item_name, quantity, and unit.\n- steps: An array of strings, each a step in the preparation process.\n- missing_ingredients: An array of objects, each with item_name, quantity, and unit, detailing ingredients not available."
+                    "content": "Take an input in a JSON format containing a list of ingredients with properties: item_name and expiry_date. Generate a recipe that can be made with these ingredients. \n\nTo create a recipe:\n- Minimize the use of ingredients not already available.\n- Prioritize using ingredients with upcoming expiry dates.\n- Ensure recipes are specific and not vague.\n\n# Steps\n\n1. Analyze the list of available ingredients, focusing on those nearing expiry.\n2. Identify potential recipes that can be made with the given ingredients.\n3. Evaluate how well the available ingredients fit the chosen recipe, considering substitutions if needed.\n4. Clearly outline the recipe with all required steps and quantities.\n5. List any additional ingredients needed with the quantity required.\n\n# Output Format\n\nThe output should be a JSON object with the following structure:\n- recipe_name: A descriptive name for the recipe.\n- description: A brief description of the recipe.\n- ingredients: An array of objects, each with item_name, quantity, and unit.\n- steps: An array of strings, each a step in the preparation process.\n- missing_ingredients: An array of objects, each with item_name, quantity, and unit, detailing ingredients not available."
                 },
                 {
                     "role": "user",

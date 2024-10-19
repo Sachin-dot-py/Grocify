@@ -46,34 +46,6 @@ const Inventory = () => {
     }
   };
 
-  const handleQuantityChange = async (itemId, change) => {
-    const token = localStorage.getItem('access_token');
-    if (!token) return;
-
-    try {
-      const updatedItems = items.map((item) => {
-        if (item._id === itemId) {
-          return { ...item, quantity: item.quantity + change };
-        }
-        return item;
-      });
-      setItems(updatedItems);
-      if (change > 0) {
-        setToastMessage('Quantity increased successfully');
-        setToastVariant('success');
-        setToastIcon(<FaThumbsUp />);
-      } else {
-        setToastMessage('Quantity decreased successfully');
-        setToastVariant('danger');
-        setToastIcon(<FaTrash />);
-      }
-      setShowToast(true);
-    } catch (error) {
-      console.error('Error updating quantity:', error);
-      setError('Error updating quantity');
-    }
-  };
-
   const handleDelete = async (itemId) => {
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -85,39 +57,27 @@ const Inventory = () => {
       return;
     }
 
-    let retries = 3;
-    while (retries > 0) {
-      try {
-        console.log('Attempting to delete item with ID:', itemId);
-        console.log('Authorization token:', token);
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/api/inventory/${itemId}`, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
 
-        const response = await axios.delete(`${API_BASE_URL}/api/inventory/${itemId}`, {
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-        });
-
-        console.log('Delete response status:', response.status);
-
-        if (response.status === 200 || response.status === 204) {
-          // Filter out the deleted item from the local state
-          setItems((prevItems) => prevItems.filter((item) => item._id !== itemId));
-          setToastMessage('Item deleted successfully');
-          setToastVariant('success');
-          setToastIcon(<FaTrash />);
-          setShowToast(true);
-          return; // Exit the function if successful
-        } else {
-          throw new Error('Unexpected response status: ' + response.status);
-        }
-      } catch (error) {
-        retries -= 1;
-        console.error('Error deleting item:', error.response ? error.response.data : error.message);
-        if (retries === 0) {
-          setToastMessage('Failed to delete item. Please try again.');
-          setToastVariant('danger');
-          setToastIcon(<FaTrash />);
-          setShowToast(true);
-        }
+      if (response.status === 200 || response.status === 204) {
+        // Remove the deleted item from the frontend state
+        setItems((prevItems) => prevItems.filter((item) => item._id !== itemId));
+        setToastMessage('Item deleted successfully');
+        setToastVariant('success');
+        setToastIcon(<FaTrash />);
+        setShowToast(true);
+      } else {
+        throw new Error('Unexpected response status: ' + response.status);
       }
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      setToastMessage('Failed to delete item. Please try again.');
+      setToastVariant('danger');
+      setToastIcon(<FaTrash />);
+      setShowToast(true);
     }
   };
 
@@ -130,11 +90,11 @@ const Inventory = () => {
     if (daysToExpiry <= 0) {
       return { variant: 'danger', percentage: 100, label: 'Expired' };
     } else if (daysToExpiry <= 3) {
-      return { variant: 'warning', percentage: 75, label: 'Expiring Soon' };
+      return { variant: 'warning', percentage: 100, label: 'Expiring Soon' };
     } else if (daysToExpiry <= 7) {
-      return { variant: 'info', percentage: 50, label: 'Fresh' };
+      return { variant: 'info', percentage: 100, label: 'Fresh' };
     } else {
-      return { variant: 'success', percentage: 25, label: 'Fresh' };
+      return { variant: 'success', percentage: 100, label: 'Fresh' };
     }
   };
 
@@ -175,18 +135,7 @@ const Inventory = () => {
                           <Card.Text className="text-muted mb-2">
                             <FaClock className="mr-1" /> Expiry Date: {new Date(item.expiry_date).toLocaleDateString()}
                           </Card.Text>
-                          <Card.Text className="text-muted">
-                            Quantity: {item.quantity} {item.unit}
-                          </Card.Text>
-                          <div className="quantity-controls d-flex justify-content-between mb-3">
-                            <Button variant="outline-secondary" size="sm" onClick={() => handleQuantityChange(item._id, -1)} disabled={item.quantity <= 1}>
-                              <FaMinus />
-                            </Button>
-                            <Button variant="outline-secondary" size="sm" onClick={() => handleQuantityChange(item._id, 1)}>
-                              <FaPlus />
-                            </Button>
-                          </div>
-                          <ProgressBar className="mb-3" variant={variant} now={percentage} label={`${Math.round(percentage)}%`} />
+                          <ProgressBar className="mb-3" variant={variant} now={percentage} label={``} />
                           <div className="mt-auto d-flex justify-content-between">
                             <Button variant="outline-info" size="sm" className="edit-button">
                               <FaEdit className="mr-1" /> Edit

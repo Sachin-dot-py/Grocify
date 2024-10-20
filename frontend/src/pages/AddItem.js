@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Button, Container, Row, Col, Spinner, Alert, Modal, Form, Toast } from 'react-bootstrap';
+import { Card, Button, Container, Row, Col, Spinner, Alert, Modal, Form, Toast, Dropdown } from 'react-bootstrap';
 import Webcam from 'react-webcam';
 import Quagga from 'quagga'; // Barcode scanning library
 import axios from 'axios';
-import { FaCamera, FaBarcode, FaTimes, FaCheckCircle, FaPlus } from 'react-icons/fa';
+import { FaCamera, FaBarcode, FaTimes, FaCheckCircle, FaPlus, FaEdit, FaUtensils, FaSave, FaExclamationTriangle } from 'react-icons/fa';
 import './AddItem.css';
 
 const AddItem = () => {
@@ -17,8 +17,12 @@ const AddItem = () => {
   const [productName, setProductName] = useState(null);
   const [productImage, setProductImage] = useState(null);
   const [expiryDate, setExpiryDate] = useState("");
+  const [dietaryWarning, setDietaryWarning] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [showDietaryModal, setShowDietaryModal] = useState(false);
+  const [dietaryRestrictions, setDietaryRestrictions] = useState(null);
+  const [customDietary, setCustomDietary] = useState("");
   const navigate = useNavigate();
 
   const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
@@ -28,8 +32,43 @@ const AddItem = () => {
     const token = localStorage.getItem('access_token');
     if (!token) {
       navigate('/login');
+    } else {
+      fetchUserDietaryRestrictions(token);
     }
   }, []);
+
+  // Fetch user's dietary restrictions
+  const fetchUserDietaryRestrictions = async (token) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/user-info`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.dietary_restrictions) {
+        setDietaryRestrictions(response.data.dietary_restrictions);
+      } else {
+        setShowDietaryModal(true);
+      }
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+    }
+  };
+
+  // Handle setting dietary restrictions
+  const handleSetDietaryRestrictions = async () => {
+    const token = localStorage.getItem('access_token');
+    const restrictions = customDietary || dietaryRestrictions;
+    try {
+      await axios.put(`${API_BASE_URL}/api/user-info`, {
+        dietary_restrictions: restrictions
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDietaryRestrictions(restrictions);
+      setShowDietaryModal(false);
+    } catch (error) {
+      console.error('Error setting dietary restrictions:', error);
+    }
+  };
 
   // Start scanning for barcode
   const startBarcodeScanner = () => {
@@ -69,6 +108,36 @@ const AddItem = () => {
     });
   };
 
+  // Handle image capture and send to backend
+  const handleImageCapture = async () => {
+    setError(null); // Clear previous error messages
+    setButtonsDisabled(true);
+    const imageSrc = webcamRef.current.getScreenshot();
+    try {
+      if (!imageSrc) {
+        throw new Error('Unable to capture image');
+      }
+      const token = localStorage.getItem('access_token');
+      const response = await axios.post(`${API_BASE_URL}/api/extract-info`, {
+        image: imageSrc
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('Image extraction data:', response.data);
+      setProductName(response.data.item_name);
+      setProductImage(imageSrc);
+      await fetchItemInfo(response.data.item_name); // Fetch expiry and dietary info
+    } catch (error) {
+      console.error('Error extracting item info from image:', error);
+      setError('Error extracting item details');
+    } finally {
+      setButtonsDisabled(false);
+    }
+  };
+
   // Call backend with barcode details
   const fetchBarcodeData = async (barcode) => {
     try {
@@ -80,12 +149,39 @@ const AddItem = () => {
       console.log('Barcode data:', response.data);
       setProductName(response.data.name);
       setProductImage(response.data.image);
-      setShowModal(true);
+      await fetchItemInfo(response.data.name); // Fetch expiry and dietary info
     } catch (error) {
       console.error('Error fetching barcode data:', error);
       setError('Error fetching barcode details');
     } finally {
       setButtonsDisabled(false);
+    }
+  };
+
+  // Fetch LLM-based item info (expiry date and dietary compatibility)
+  const fetchItemInfo = async (itemName) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await axios.post(`${API_BASE_URL}/api/get-item-info`, {
+        item_name: itemName
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.status === 200) {
+        setExpiryDate(response.data.estimated_expiry);
+        if (!response.data.dietary_compatible) {
+          setDietaryWarning('Warning: This item does not meet your dietary restrictions.');
+        } else {
+          setDietaryWarning(null);
+        }
+        setShowModal(true);
+      } else {
+        setError('Error fetching item information');
+      }
+    } catch (error) {
+      console.error('Error fetching item info:', error);
+      setError('Error fetching item information');
     }
   };
 
@@ -115,37 +211,6 @@ const AddItem = () => {
     }
   };
 
-  // Handle image capture and send to backend
-  const handleImageCapture = async () => {
-    setError(null); // Clear previous error messages
-    setButtonsDisabled(true);
-    const imageSrc = webcamRef.current.getScreenshot();
-    try {
-      if (!imageSrc) {
-        throw new Error('Unable to capture image');
-      }
-      const token = localStorage.getItem('access_token');
-      const response = await axios.post(`${API_BASE_URL}/api/extract-info`, {
-        image: imageSrc
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      console.log('Image extraction data:', response.data);
-      setProductName(response.data.item_name);
-      setExpiryDate(response.data.expiry_date);
-      setProductImage(imageSrc);
-      setShowModal(true);
-    } catch (error) {
-      console.error('Error extracting item info from image:', error);
-      setError('Error extracting item details');
-    } finally {
-      setButtonsDisabled(false);
-    }
-  };
-
   return (
     <Container>
       <Row className="justify-content-center mt-4">
@@ -154,6 +219,20 @@ const AddItem = () => {
             <Card.Body>
               <Card.Title className="text-center" style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>Add New Grocery Item</Card.Title>
               <Card.Text className="text-center mb-4">
+                {dietaryRestrictions && (
+                  <div className="mb-3">
+                    <strong>Your Dietary Restrictions: </strong>
+                    <Dropdown>
+                      <Dropdown.Toggle variant="link" id="dropdown-basic" style={{ fontWeight: 'bold', color: '#007bff', textDecoration: 'underline' }}>
+                        {dietaryRestrictions} <FaEdit style={{ marginLeft: '5px' }} />
+                      </Dropdown.Toggle>
+
+                      <Dropdown.Menu>
+                        <Dropdown.Item onClick={() => setShowDietaryModal(true)}><FaUtensils style={{ marginRight: '5px' }} /> Edit Dietary Restrictions</Dropdown.Item>
+                      </Dropdown.Menu>
+                    </Dropdown>
+                  </div>
+                )}
                 Scan a barcode or capture an image to automatically input an item.
               </Card.Text>
 
@@ -189,6 +268,9 @@ const AddItem = () => {
         <Modal.Body>
           {productImage && <img src={productImage} alt={productName} className="img-fluid mb-3 rounded modal-image" />}
           <h5 className="text-center" style={{ fontWeight: 'bold' }}>{productName}</h5>
+          {dietaryWarning && <Alert variant="warning" className="d-flex align-items-center">
+            <FaExclamationTriangle style={{ marginRight: '8px' }} /> {dietaryWarning}
+          </Alert>}
           <Form>
             <Form.Group controlId="expiryDate">
               <Form.Label>Expiry Date</Form.Label>
@@ -205,21 +287,16 @@ const AddItem = () => {
             <FaTimes style={{ marginRight: '5px' }} /> Cancel
           </Button>
           <Button variant="success" onClick={handleAddItem} className="d-flex align-items-center">
-          <FaPlus style={{ marginRight: '5px' }} /> Add Item
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Toast for successful addition */}
-      <Toast onClose={() => setShowToast(false)} show={showToast} delay={3000} autohide style={{ position: 'fixed', bottom: 20, right: 20 }}>
-        <Toast.Header>
-          <FaCheckCircle style={{ marginRight: '8px', color: 'green' }} />
-          <strong className="mr-auto">Success</strong>
-        </Toast.Header>
-        <Toast.Body>Item added successfully!</Toast.Body>
-      </Toast>
-    </Container>
-  );
-};
+            <FaPlus style={{ marginRight: '5px' }} /> Add Item </Button> </Modal.Footer> </Modal>
+              {/* Toast for successful addition */}
+  <Toast onClose={() => setShowToast(false)} show={showToast} delay={3000} autohide style={{ position: 'fixed', bottom: 20, right: 20 }}>
+    <Toast.Header>
+      <FaCheckCircle style={{ marginRight: '8px', color: 'green' }} />
+      <strong className="mr-auto">Success</strong>
+    </Toast.Header>
+    <Toast.Body>Item added successfully!</Toast.Body>
+  </Toast>
+</Container>
+); };
 
 export default AddItem;

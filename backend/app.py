@@ -65,7 +65,8 @@ def register():
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
     user = {
         'username': username,
-        'password': hashed_password
+        'password': hashed_password,
+        'dietary_restrictions': None  # Initialize dietary restrictions as None
     }
     users_collection.insert_one(user)
 
@@ -84,7 +85,7 @@ def login():
     user = users_collection.find_one({'username': username})
     if user and bcrypt.check_password_hash(user['password'], password):
         access_token = create_access_token(identity=username)
-        refresh_token = create_refresh_token(identity=username)  # Generate refresh token
+        refresh_token = create_refresh_token(identity=username)
         return jsonify({'access_token': access_token, 'refresh_token': refresh_token}), 200
     elif user:
         return jsonify({'error': 'Incorrect password'}), 401
@@ -99,21 +100,43 @@ def refresh():
     new_access_token = create_access_token(identity=current_user)
     return jsonify({'access_token': new_access_token}), 200
 
+# Update dietary restrictions
+@app.route('/api/user-info', methods=['PUT'])
+@jwt_required()
+def update_user_info():
+    try:
+        current_user = get_jwt_identity()
+        data = request.json
+        dietary_restrictions = data.get('dietary_restrictions')
+
+        # Update dietary restrictions in the user's document
+        result = users_collection.update_one(
+            {'username': current_user},
+            {'$set': {'dietary_restrictions': dietary_restrictions}}
+        )
+
+        if result.matched_count == 1:
+            return jsonify({'message': 'Dietary restrictions updated successfully'}), 200
+        else:
+            return jsonify({'error': 'Failed to update dietary restrictions'}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # Route to fetch user information
 @app.route('/api/user-info', methods=['GET'])
 @jwt_required()
 def user_info():
     try:
-        current_user = get_jwt_identity()  # Get the username from the token
-        user = users_collection.find_one({"username": current_user})
+        current_user = get_jwt_identity()
+        user = users_collection.find_one({'username': current_user})
 
         if not user:
             return jsonify({'error': 'User not found'}), 404
 
         return jsonify({
-            'username': user['username']
+            'username': user['username'],
+            'dietary_restrictions': user.get('dietary_restrictions')
         }), 200
-
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

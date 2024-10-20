@@ -34,7 +34,7 @@ items_collection = db.items
 users_collection = db.users
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
-gpt_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+gpt_client = OpenAI(base_url="https://api.groq.com/openai/v1", api_key=os.getenv("GROK_API_KEY"))
 
 # BarcodeLookup API credentials
 BARCODE_LOOKUP_API_KEY = os.getenv("BARCODE_API_KEY")
@@ -270,6 +270,100 @@ def delete_item(item_id):
             return jsonify({'message': 'Item deleted successfully'}), 200
         else:
             return jsonify({'error': 'Item not found or unauthorized access'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+ 
+# Route to generate custom recipe using GPT-4o-mini
+@app.route('/api/generate-custom-recipe', methods=['POST'])
+@jwt_required()
+def generate_custom_recipe():
+    try:
+        data = request.json
+        ingredients = data.get('ingredients')
+        ingredients = [{"item_name": item["item_name"], "expiry_date": item["expiry_date"]} for item in ingredients]
+        dietary_restrictions = data.get('dietary_restrictions', [])
+        cuisine = data.get('cuisine', '')
+        special_requests = data.get('special_requests', '')
+
+        if not ingredients:
+            return jsonify({'error': 'No ingredients provided'}), 400
+
+        # Update prompt to include dietary restrictions, cuisine, and special requests
+        system_content = "Take an input in JSON format containing a list of ingredients (item_name, expiry_date). Generate a recipe using these ingredients.\n\nTo create the recipe:\n- Minimize the use of unavailable ingredients.\n- Prioritize ingredients nearing expiry.\n- Ensure recipes are specific.\n- Include missing ingredients (those required but not available) with quantities.\n\nConsider user preferences:\n" + f"- Dietary Restrictions: {', '.join(dietary_restrictions) if dietary_restrictions else 'None'}\n" + f"- Preferred Cuisine: {cuisine}\n" + f"- Special Requests: {special_requests}\n" + "# Output Format\n\nThe output should be a JSON object:\n- recipe_name: Name of the recipe.\n- description: Brief description.\n- ingredients: Array of objects (item_name, quantity, unit).\n- steps: Array of preparation steps.\n- missing_ingredients: Array of missing ingredients (item_name, quantity, unit)."
+        
+        # Use GPT-4o-mini to generate a custom recipe
+        response = gpt_client.chat.completions.create(
+            model="gemma2-9b-it",
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_content
+                },
+                {
+                    "role": "user",
+                    "content": json.dumps(ingredients)
+                }
+            ],
+            temperature=1,
+            max_tokens=2048,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            response_format={"type": "json_object"}
+        )
+
+        if response and response.choices:
+            recipe_data = response.choices[0].message.content.strip()
+            print(recipe_data)
+            recipe_json = json.loads(recipe_data)
+            return jsonify(recipe_json), 200
+        else:
+            return jsonify({'error': 'Failed to generate custom recipe'}), 500
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/generate-recipe', methods=['POST'])
+@jwt_required()
+def generate_recipe():
+    try:
+        data = request.json
+        ingredients = data.get('ingredients')
+        ingredients = [{"item_name": item["item_name"], "expiry_date": item["expiry_date"]} for item in ingredients]
+
+        if not ingredients:
+            return jsonify({'error': 'No ingredients provided'}), 400
+
+        # Use GPT-4o-mini to generate a recipe
+        response = gpt_client.chat.completions.create(
+            model="mixtral-8x7b-32768",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Take an input in a JSON format containing a list of ingredients with properties: item_name and expiry_date. Generate a recipe that can be made with these ingredients.\n\nTo create a recipe:\n- Minimize the use of ingredients not already available.\n- Prioritize using ingredients with upcoming expiry dates.\n- Ensure recipes are specific and not vague.\n\n# Steps\n\n1. Analyze the list of available ingredients, focusing on those nearing expiry.\n2. Identify potential recipes that can be made with the given ingredients.\n3. Evaluate how well the available ingredients fit the chosen recipe, considering substitutions if needed.\n4. Clearly outline the recipe with all required steps and quantities.\n5. List any additional ingredients needed (i.e., the missing ingredients that are required for the recipe but are not available) with the quantity required.\n\n# Output Requirements\n- Always return a valid JSON format result.\n- Avoid null values. If any value cannot be provided, use a reasonable default.\n\n# Output Format\n\nThe output should be a JSON object with the following structure:\n- recipe_name: A descriptive name for the recipe.\n- description: A brief description of the recipe.\n- ingredients: An array of objects, each with item_name, quantity, and unit.\n- steps: An array of strings, each a step in the preparation process.\n- missing_ingredients: An array of objects, each with item_name, quantity, and unit, detailing ingredients needed for the recipe that are not available."
+                },
+                {
+                    "role": "user",
+                    "content": json.dumps(ingredients)
+                }
+            ],
+            temperature=1,
+            max_tokens=2048,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            response_format={"type": "json_object"}
+        )
+
+        if response and response.choices:
+            recipe_data = response.choices[0].message.content.strip()
+            print(recipe_data)
+            recipe_json = json.loads(recipe_data)
+            return jsonify(recipe_json), 200
+        else:
+            return jsonify({'error': 'Failed to generate recipe'}), 500
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

@@ -41,7 +41,7 @@ const AddItem = () => {
         type: 'LiveStream',
         target: webcamRef.current.video,
         constraints: {
-          facingMode: 'environment' // Rear camera
+          facingMode: { exact: 'environment' } // Rear camera
         },
       },
       decoder: {
@@ -170,6 +170,7 @@ const AddItem = () => {
                 <Webcam
                   ref={webcamRef}
                   screenshotFormat="image/jpeg"
+                  videoConstraints={{ facingMode: 'environment' }}
                   className="webcam-view"
                 />
               </div>

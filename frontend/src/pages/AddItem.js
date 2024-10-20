@@ -41,7 +41,7 @@ const AddItem = () => {
         type: 'LiveStream',
         target: webcamRef.current.video,
         constraints: {
-          facingMode: { exact: 'environment' } // Rear camera
+          facingMode: 'environment' // Rear camera
         },
       },
       decoder: {

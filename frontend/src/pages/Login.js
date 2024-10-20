@@ -33,10 +33,14 @@ const Login = () => {
         // After successful registration, log the user in
         await handleLogin();
       } catch (error) {
-        console.error('Error signing up:', error);
-        setError('Error creating account');
+        if (error.response && error.response.data.error === 'Username already exists') {
+          setError('Username already exists. Please choose a different one.');
+        } else {
+          setError('Error creating account');
+        }
       }
     };
+    
   
     return (
       <Container fluid className="login-container">

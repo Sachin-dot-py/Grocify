@@ -86,8 +86,10 @@ def login():
         access_token = create_access_token(identity=username)
         refresh_token = create_refresh_token(identity=username)  # Generate refresh token
         return jsonify({'access_token': access_token, 'refresh_token': refresh_token}), 200
+    elif user:
+        return jsonify({'error': 'Incorrect password'}), 401
     else:
-        return jsonify({'error': 'Invalid credentials'}), 401
+        return jsonify({'error': 'Username does not exist'}), 401
 
 # Refresh token route
 @app.route('/api/refresh', methods=['POST'])

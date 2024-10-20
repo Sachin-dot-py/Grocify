@@ -136,13 +136,12 @@ const Inventory = () => {
                             <FaClock className="mr-1" /> Expiry Date: {new Date(item.expiry_date).toLocaleDateString()}
                           </Card.Text>
                           <ProgressBar className="mb-3 rounded-pill" variant={variant} now={percentage} label={``} />
-                          <div className="mt-auto d-flex justify-content-between">
-                            <Button variant="outline-info" size="sm" className="edit-button rounded-pill">
-                              <FaEdit className="mr-1" /> Edit
-                            </Button>
+                          <div className="">
+                            <center>
                             <Button variant="outline-danger" size="sm" className="delete-button rounded-pill" onClick={() => handleDelete(item._id)}>
                               <FaTrashAlt className="mr-1" /> Delete
                             </Button>
+                            </center>
                           </div>
                         </Card.Body>
                       </Card>

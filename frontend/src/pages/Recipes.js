@@ -57,7 +57,7 @@ const Recipes = () => {
       if (err.response && err.response.status === 400) {
         setError('No ingredients found. Please add items to your inventory first.');
       } else {
-        setError('Error fetching recipe. Please try again later.');
+        setError('Could not craft a recipe with the current ingredients. Please try adding more!');
       }
     } finally {
       setLoading(false);

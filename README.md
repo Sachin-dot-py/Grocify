@@ -2,6 +2,10 @@
 
 Grocify is an all-in-one food tracking, grocery management, and cooking assistant platform designed to help users efficiently manage their kitchen inventory. It provides features such as barcode scanning, personalized recipe suggestions, dietary-specific custom recipe generation, and more, making it easier to manage ingredients, minimize food waste, and explore new recipes.
 
+## Built for Cal Hacks 11.0
+
+Grocify was created as part of Cal Hacks 11.0 in San Francisco. We wanted to challenge ourselves to solve a real-world problem within the hackathon's time constraints, and food waste felt like an issue that resonated with many of us. Over an intense weekend of brainstorming, coding, and testing, we brought Grocify to life, aiming to make grocery management smarter, more sustainable, and accessible to everyone.
+
 ## Tech Stack
 
 - **Frontend**: React.js with Bootstrap for styling.

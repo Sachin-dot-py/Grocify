@@ -11,6 +11,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from bson import ObjectId
 from flask_cors import CORS
+import datetime
 
 load_dotenv()
 app = Flask(__name__)
@@ -200,6 +201,52 @@ def add_item():
     items_collection.insert_one(item)
 
     return jsonify({'message': 'Item added successfully'}), 201
+
+# Route to fetch LLM-based item info (expiry date and dietary compatibility)
+@app.route('/api/get-item-info', methods=['POST'])
+@jwt_required()
+def get_item_info():
+    try:
+        data = request.json
+        item_name = data.get('item_name')
+        if not item_name:
+            return jsonify({'error': 'No item name provided'}), 400
+
+        dietary_restrictions = users_collection.find_one({'username': get_jwt_identity()}).get('dietary_restrictions')
+        # Use GPT to evaluate dietary compatibility and estimate expiry
+        response = gpt_client.chat.completions.create(
+            model="mixtral-8x7b-32768",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Provide a JSON response indicating whether a given item meets specified dietary restrictions and an estimated expiry date for the item.\n\n# Steps\n\n1. **Understand the Input Parameters:**\n   - `item_name`: The name of the item to be evaluated.\n   - `current_date`: The date on which the assessment is made.\n   - `dietary_restrictions`: A list of dietary restrictions that the item must comply with.\n\n2. **Assess Dietary Compatibility:**\n   - Identify whether the `item_name` complies with the provided `dietary_restrictions`.\n   - Determine compatibility as \"yes\" if all restrictions are met, otherwise \"no.\"\n\n3. **Estimate Expiry Date:**\n   - Provide an estimated expiry date for the `item_name`, taking into account typical shelf life and storage conditions.\n\n4. **Prepare JSON Response:**\n   - Include the key `dietary_compatible` with a value of \"yes\" or \"no.\"\n   - Include `estimated_expiry_date` with the calculated date."
+                },
+                {
+                    "role": "user",
+                    "content": json.dumps({
+                        "item_name": item_name,
+                        "current_date": str(datetime.date.today()),
+                        "dietary_restrictions": dietary_restrictions
+                    })
+                }
+            ],
+            temperature=0.5,
+            max_tokens=200,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            response_format={"type": "json_object"}
+        )
+
+        if response and response.choices:
+            item_info = response.choices[0].message.content.strip()
+            item_info_json = json.loads(item_info)
+            return jsonify(item_info_json), 200
+        else:
+            return jsonify({'error': 'Failed to retrieve item information from GPT'}), 500
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # Route to extract item information from an image
 @app.route('/api/extract-info', methods=['POST'])

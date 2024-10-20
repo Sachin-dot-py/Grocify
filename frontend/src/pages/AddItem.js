@@ -64,6 +64,7 @@ const AddItem = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setDietaryRestrictions(restrictions);
+      setCustomDietary(""); // Reset custom dietary input
       setShowDietaryModal(false);
     } catch (error) {
       console.error('Error setting dietary restrictions:', error);
@@ -169,8 +170,8 @@ const AddItem = () => {
       });
 
       if (response.status === 200) {
-        setExpiryDate(response.data.estimated_expiry);
-        if (!response.data.dietary_compatible) {
+        setExpiryDate(response.data.estimated_expiry_date); // Set estimated expiry date
+        if (response.data.dietary_compatible === "no") {
           setDietaryWarning('Warning: This item does not meet your dietary restrictions.');
         } else {
           setDietaryWarning(null);
@@ -260,22 +261,26 @@ const AddItem = () => {
         </Col>
       </Row>
 
-      {/* Modal to display product details and add expiry date */}
+      {/* Modal to confirm item details */}
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Add Item Details</Modal.Title>
+          <Modal.Title>Confirm Grocery Item</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {productImage && <img src={productImage} alt={productName} className="img-fluid mb-3 rounded modal-image" />}
           <h5 className="text-center" style={{ fontWeight: 'bold' }}>{productName}</h5>
-          {dietaryWarning && <Alert variant="warning" className="d-flex align-items-center">
-            <FaExclamationTriangle style={{ marginRight: '8px' }} /> {dietaryWarning}
-          </Alert>}
           <Form>
-            <Form.Group controlId="expiryDate">
-              <Form.Label>Expiry Date</Form.Label>
+            {dietaryWarning && (
+              <Alert variant="warning">
+                <FaExclamationTriangle style={{ marginRight: '5px' }} />
+                {dietaryWarning}
+              </Alert>
+            )}
+            <Form.Group controlId="formBasicExpiryDate">
+              <Form.Label>Estimated Expiry Date</Form.Label>
               <Form.Control
                 type="date"
+                placeholder="Enter expiry date"
                 value={expiryDate}
                 onChange={(e) => setExpiryDate(e.target.value)}
               />
@@ -283,20 +288,92 @@ const AddItem = () => {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="danger" onClick={() => setShowModal(false)} className="d-flex align-items-center">
-            <FaTimes style={{ marginRight: '5px' }} /> Cancel
+        <Button variant="secondary" onClick={() => setShowModal(false)}>
+          <FaTimes style={{ marginRight: '5px' }} /> Cancel
+        </Button>
+        <Button variant="primary" onClick={handleAddItem}>
+          <FaPlus style={{ marginRight: '5px' }} /> Add Item
+        </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal to display dietary restrictions */}
+      <Modal show={showDietaryModal} backdrop="static">
+        <Modal.Header>
+          <Modal.Title>Set Dietary Restrictions</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group>
+              <Form.Label>Select Your Dietary Restrictions</Form.Label>
+              <Form.Check
+                type="radio"
+                label="None"
+                name="dietaryOptions"
+                id="none"
+                checked={dietaryRestrictions === 'None'}
+                onChange={() => setDietaryRestrictions('None')}
+              />
+              <Form.Check
+                type="radio"
+                label="Vegetarian"
+                name="dietaryOptions"
+                id="vegetarian"
+                checked={dietaryRestrictions === 'Vegetarian'}
+                onChange={() => setDietaryRestrictions('Vegetarian')}
+              />
+              <Form.Check
+                type="radio"
+                label="Vegan"
+                name="dietaryOptions"
+                id="vegan"
+                checked={dietaryRestrictions === 'Vegan'}
+                onChange={() => setDietaryRestrictions('Vegan')}
+              />
+              <Form.Check
+                type="radio"
+                label="Gluten-Free"
+                name="dietaryOptions"
+                id="glutenFree"
+                checked={dietaryRestrictions === 'Gluten-Free'}
+                onChange={() => setDietaryRestrictions('Gluten-Free')}
+              />
+              <Form.Check
+                type="radio"
+                label="Other"
+                name="dietaryOptions"
+                id="other"
+                checked={dietaryRestrictions === 'Other'}
+                onChange={() => setDietaryRestrictions('Other')}
+              />
+              <Form.Control
+                type="text"
+                placeholder="Enter custom dietary restriction"
+                value={customDietary}
+                onChange={(e) => setCustomDietary(e.target.value)}
+                disabled={dietaryRestrictions !== 'Other'}
+                className="mt-2"
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="primary" onClick={handleSetDietaryRestrictions} className="d-flex align-items-center">
+            <FaSave style={{ marginRight: '5px' }} /> Save
           </Button>
-          <Button variant="success" onClick={handleAddItem} className="d-flex align-items-center">
-            <FaPlus style={{ marginRight: '5px' }} /> Add Item </Button> </Modal.Footer> </Modal>
-              {/* Toast for successful addition */}
-  <Toast onClose={() => setShowToast(false)} show={showToast} delay={3000} autohide style={{ position: 'fixed', bottom: 20, right: 20 }}>
-    <Toast.Header>
-      <FaCheckCircle style={{ marginRight: '8px', color: 'green' }} />
-      <strong className="mr-auto">Success</strong>
-    </Toast.Header>
-    <Toast.Body>Item added successfully!</Toast.Body>
-  </Toast>
-</Container>
-); };
+        </Modal.Footer>
+      </Modal>
+
+      {/* Toast for successful addition */}
+      <Toast onClose={() => setShowToast(false)} show={showToast} delay={3000} autohide style={{ position: 'fixed', bottom: 20, right: 20 }}>
+        <Toast.Header>
+          <FaCheckCircle style={{ marginRight: '8px', color: 'green' }} />
+          <strong className="mr-auto">Success</strong>
+        </Toast.Header>
+        <Toast.Body>Item added successfully!</Toast.Body>
+      </Toast>
+    </Container>
+  );
+};
 
 export default AddItem;

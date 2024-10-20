@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Spinner, Alert, Modal, Form } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Spinner, Alert, Modal, Form, InputGroup } from 'react-bootstrap';
 import axios from 'axios';
-import { FaRedo, FaPlusCircle, FaPenFancy, FaCheckCircle } from 'react-icons/fa';
+import { FaRedo, FaPlusCircle, FaPenFancy, FaCheckCircle, FaPaperPlane } from 'react-icons/fa';
 import './Recipes.css';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,18 +14,19 @@ const Recipes = () => {
   const [customCuisine, setCustomCuisine] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
   const [customCuisineOther, setCustomCuisineOther] = useState('');
+  const [chatMessages, setChatMessages] = useState([]);
+  const [userMessage, setUserMessage] = useState('');
   const navigate = useNavigate();
 
   const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
-  // Authentication required
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (!token) {
       navigate('/login');
     }
   }, []);
-  
+
   useEffect(() => {
     fetchRecipe();
   }, []);
@@ -52,6 +53,7 @@ const Recipes = () => {
       });
 
       setRecipe(recipeResponse.data);
+      setChatMessages([{ role: 'system', content: 'Ask me anything about the recipe!' }]);
     } catch (err) {
       console.error('Error fetching recipe:', err);
       if (err.response && err.response.status === 400) {
@@ -66,9 +68,9 @@ const Recipes = () => {
 
   const handleCheckChange = (e, label) => {
     setDietaryRestrictions(prev =>
-    e.target.checked ? [...prev, label] : prev.filter(item => item !== label)
-  );
-};
+      e.target.checked ? [...prev, label] : prev.filter(item => item !== label)
+    );
+  };
 
   const handleCustomRecipeSubmit = async () => {
     setLoading(true);
@@ -106,6 +108,36 @@ const Recipes = () => {
       setLoading(false);
     }
   };
+
+  const handleChatSubmit = async () => {
+    if (!userMessage.trim()) return;
+  
+    const newMessage = { role: 'user', content: userMessage };
+    setChatMessages([...chatMessages, newMessage]);
+    setUserMessage('');
+  
+    const token = localStorage.getItem('access_token');
+  
+    try {
+      // Send the chat messages along with the recipe data to the backend
+      const response = await axios.post(`${API_BASE_URL}/api/chat-recipe`, {
+        messages: [...chatMessages, newMessage],
+        recipe_name: recipe.recipe_name,
+        description: recipe.description,
+        ingredients: recipe.ingredients,
+        steps: recipe.steps
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+  
+      const assistantMessage = response.data;
+      setChatMessages([...chatMessages, newMessage, { role: 'assistant', content: assistantMessage }]);
+    } catch (error) {
+      console.error('Error during chat:', error);
+      setChatMessages([...chatMessages, newMessage, { role: 'assistant', content: 'Sorry, I couldn\'t process that. Please try again.' }]);
+    }
+  };
+  
 
   return (
     <Container fluid className="recipe-container">
@@ -177,6 +209,36 @@ const Recipes = () => {
           )}
         </Col>
       </Row>
+
+      {/* Live Chat Section */}
+      {recipe && (
+        <Row className="justify-content-center mt-5">
+          <Col md={10}>
+            <Card className="shadow-lg chat-card">
+              <Card.Body>
+                <Card.Title className="text-center">Chat with the Head Chef 👨‍🍳</Card.Title>
+                <div className="chat-box">
+                  {chatMessages.map((message, index) => (
+                    <div key={index} className={`chat-message ${message.role}`}> {message.role === 'user' ? 'You' : 'Assistant'}: {message.content}</div>
+                  ))}
+                </div>
+                <InputGroup>
+                  <Form.Control
+                    type="text"
+                    placeholder="Ask a question about the recipe..."
+                    value={userMessage}
+                    onChange={(e) => setUserMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleChatSubmit()}
+                  />
+                  <Button variant="primary" onClick={handleChatSubmit}>
+                    <FaPaperPlane />
+                  </Button>
+                </InputGroup>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      )}
 
       {/* Custom Recipe Modal */}
       <Modal show={showCustomRecipeModal} onHide={() => setShowCustomRecipeModal(false)}>

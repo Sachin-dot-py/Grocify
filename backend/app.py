@@ -344,9 +344,55 @@ def delete_item(item_id):
             return jsonify({'error': 'Item not found or unauthorized access'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
+# Live Chat with Recipe Assistant
+@app.route('/api/chat-recipe', methods=['POST'])
+@jwt_required()
+def chat_recipe():
+    try:
+        # Get user identity and input data
+        current_user = get_jwt_identity()
+        data = request.json
+        messages = data.get('messages')
+        recipe_name = data.get('recipe_name')
+        description = data.get('description')
+        ingredients = data.get('ingredients')
+        steps = data.get('steps')
+
+        if not messages:
+            return jsonify({'error': 'No messages provided'}), 400
+
+        # Include recipe context in each request to maintain context
+        recipe_context = [
+            {
+                "role": "system",
+                "content": f"Recipe Name: {recipe_name}\nDescription: {description}\nIngredients: {ingredients}\nSteps: {steps}"
+            }
+        ]
+        messages_with_context = recipe_context + messages
+
+        # Use OpenAI to get a response for the chat with the provided system prompt
+        response = gpt_client.chat.completions.create(
+            model="gemma2-9b-it",
+            messages=messages_with_context,
+            temperature=1,
+            max_tokens=150,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0
+        )
+
+        if response and response.choices:
+            assistant_message = response.choices[0].message.content.strip()
+            return jsonify(assistant_message), 200
+        else:
+            return jsonify({'error': 'Failed to generate response from assistant'}), 500
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
  
-# Route to generate custom recipe using GPT-4o-mini
+# Route to generate custom recipe using LLM
 @app.route('/api/generate-custom-recipe', methods=['POST'])
 @jwt_required()
 def generate_custom_recipe():
@@ -364,7 +410,7 @@ def generate_custom_recipe():
         # Update prompt to include dietary restrictions, cuisine, and special requests
         system_content = "Take an input in JSON format containing a list of ingredients (item_name, expiry_date). Generate a recipe using these ingredients.\n\nTo create the recipe:\n- Minimize the use of unavailable ingredients.\n- Prioritize ingredients nearing expiry.\n- Ensure recipes are specific.\n- Include missing ingredients (those required but not available) with quantities.\n\nConsider user preferences:\n" + f"- Dietary Restrictions: {', '.join(dietary_restrictions) if dietary_restrictions else 'None'}\n" + f"- Preferred Cuisine: {cuisine}\n" + f"- Special Requests: {special_requests}\n" + "# Output Format\n\nThe output should be a JSON object:\n- recipe_name: Name of the recipe.\n- description: Brief description.\n- ingredients: Array of objects (item_name, quantity, unit).\n- steps: Array of preparation steps.\n- missing_ingredients: Array of missing ingredients (item_name, quantity, unit)."
         
-        # Use GPT-4o-mini to generate a custom recipe
+        # Use LLM to generate a custom recipe
         response = gpt_client.chat.completions.create(
             model="gemma2-9b-it",
             messages=[
@@ -407,7 +453,7 @@ def generate_recipe():
         if not ingredients:
             return jsonify({'error': 'No ingredients provided'}), 400
 
-        # Use GPT-4o-mini to generate a recipe
+        # Use LLM to generate a recipe
         response = gpt_client.chat.completions.create(
             model="mixtral-8x7b-32768",
             messages=[

@@ -1,77 +1,186 @@
-/* Recipes.css */
 
 .recipe-container {
-    padding: 20px;
-    background-color: #f8f9fa;
+  background-color: #f9f9f9;
+  padding: 20px;
+}
+
+.recipe-card {
+  border-radius: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.chat-card {
+  border-radius: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.recipe-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.recipe-name {
+  color: #d9534f;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.recipe-summary {
+  font-size: 1.25rem;
+  font-style: italic;
+  color: #555;
+  margin-bottom: 30px;
+}
+
+.recipe-section {
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+}
+
+.ingredients-heading,
+.steps-heading,
+.missing-heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #007bff;
+  margin-bottom: 15px;
+}
+
+.ingredients-list,
+.steps-list,
+.missing-ingredients ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.ingredients-list li,
+.steps-list li,
+.missing-ingredients li {
+  margin-bottom: 10px;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.ingredient-name {
+  color: #5a6268;
+  font-weight: 500;
+}
+
+.ingredients-list li::before,
+.missing-ingredients li::before {
+  content: "\2022";
+  color: #007bff;
+  font-weight: bold;
+  display: inline-block;
+  width: 1em;
+  margin-left: -1em;
+}
+
+.steps-list li::before {
+  content: counter(step-counter) ". ";
+  counter-increment: step-counter;
+  font-weight: bold;
+  color: #d9534f;
+}
+
+.steps-list {
+  counter-reset: step-counter;
+}
+
+.chat-box {
+  height: 400px;
+  overflow-y: auto;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 15px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.chat-message {
+  margin-bottom: 15px;
+  padding: 15px;
+  border-radius: 12px;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.chat-message.user {
+  background-color: #d1e7ff;
+  text-align: right;
+  align-self: flex-end;
+  max-width: 80%;
+}
+
+.chat-message.assistant {
+  background-color: #e2e3e5;
+  text-align: left;
+  align-self: flex-start;
+  max-width: 80%;
+}
+
+.chat-title {
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.chat-input-group {
+  align-items: center;
+  margin-top: 20px;
+}
+
+.chat-input {
+  border-radius: 30px;
+  padding: 15px;
+  font-size: 1rem;
+}
+
+.send-button {
+  border-radius: 30px;
+  margin-left: 10px;
+  padding: 10px 20px;
+  font-size: 1.2rem;
+}
+
+.generate-again-button,
+.custom-recipe-button {
+  border-radius: 30px;
+  margin-top: 15px;
+  padding: 10px 20px;
+  font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+  .chat-box {
+    height: 300px;
   }
-  
-  .recipe-card {
-    border: none;
-    border-radius: 15px;
-    transition: transform 0.3s, box-shadow 0.3s;
+
+  .chat-message {
+    font-size: 0.9rem;
+    padding: 10px;
   }
-  
-  .recipe-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+
+  .chat-input {
+    font-size: 0.9rem;
+    padding: 10px;
   }
-  
-  .recipe-title {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #343a40;
-    margin-bottom: 15px;
-  }
-  
-  .recipe-summary {
-    font-size: 1.2rem;
-    color: #6c757d;
-    margin-bottom: 30px;
-  }
-  
-  .ingredients-heading,
-  .steps-heading,
-  .missing-heading {
-    font-weight: bold;
-    color: #007bff;
-    margin-top: 20px;
-    margin-bottom: 10px;
-  }
-  
-  .ingredients-list,
-  .steps-list,
-  .missing-ingredients ul {
-    list-style-type: none;
-    padding-left: 0;
+
+  .send-button {
     font-size: 1rem;
-    color: #495057;
+    padding: 8px 16px;
   }
-  
-  .ingredients-list li,
-  .steps-list li,
-  .missing-ingredients ul li {
-    margin-bottom: 10px;
+
+  .generate-again-button,
+  .custom-recipe-button {
+    font-size: 1rem;
+    padding: 8px 16px;
   }
-  
-  .generate-again-button {
-    padding: 10px 20px;
-    font-weight: bold;
-    transition: background-color 0.3s;
-  }
-  
-  .generate-again-button:hover {
-    background-color: #0056b3;
-  }
-  
-  .text-center {
-    text-align: center;
-  }
-  
-  .mt-5 {
-    margin-top: 3rem;
-  }
-  
-  .mb-5 {
-    margin-bottom: 3rem;
-  }
-  
+}

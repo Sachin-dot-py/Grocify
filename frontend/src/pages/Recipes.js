@@ -4,6 +4,7 @@ import axios from 'axios';
 import { FaRedo, FaPlusCircle, FaPenFancy, FaCheckCircle, FaPaperPlane } from 'react-icons/fa';
 import './Recipes.css';
 import { useNavigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
 
 const Recipes = () => {
   const [recipe, setRecipe] = useState(null);
@@ -45,7 +46,7 @@ const Recipes = () => {
       });
       const ingredients = inventoryResponse.data;
 
-      // Call GPT-4o-mini API to generate a recipe
+      // Call LLM API to generate a recipe
       const recipeResponse = await axios.post(`${API_BASE_URL}/api/generate-recipe`, {
         ingredients
       }, {
@@ -95,7 +96,7 @@ const Recipes = () => {
         special_requests: specialRequests
       };
 
-      // Call GPT-4o-mini API to generate a custom recipe
+      // Call LLM API to generate a custom recipe
       const recipeResponse = await axios.post(`${API_BASE_URL}/api/generate-custom-recipe`, customRecipeData, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
       });
@@ -137,13 +138,12 @@ const Recipes = () => {
       setChatMessages([...chatMessages, newMessage, { role: 'assistant', content: 'Sorry, I couldn\'t process that. Please try again.' }]);
     }
   };
-  
 
   return (
     <Container fluid className="recipe-container">
       <Row className="justify-content-center mt-4">
         <Col md={10}>
-          <h2 className="text-center mb-4">Recipe Created from Your Inventory</h2>
+          <h2 className="text-center mb-4 recipe-title">Recipe Created from Your Inventory</h2>
           <p className="text-center mb-5 recipe-description">
             This recipe has been specially crafted using the ingredients available in your inventory, prioritizing items that are close to their expiry date.
           </p>
@@ -166,29 +166,37 @@ const Recipes = () => {
           ) : (
             <Card className="shadow-lg recipe-card">
               <Card.Body>
-                <Card.Title className="text-center recipe-title">{recipe.recipe_name}</Card.Title>
-                <Card.Text className="text-center recipe-summary">{recipe.description}</Card.Text>
-                <h5 className="ingredients-heading">Ingredients:</h5>
-                <ul className="ingredients-list">
-                  {recipe.ingredients.map((ingredient, index) => (
-                    <li key={index}>
-                      {ingredient.quantity} {ingredient.unit} of {ingredient.item_name}
-                    </li>
-                  ))}
-                </ul>
-                <h5 className="steps-heading">Steps:</h5>
-                <ol className="steps-list">
-                  {recipe.steps.map((step, index) => (
-                    <li key={index}>{step}</li>
-                  ))}
-                </ol>
+                <Card.Title className="text-center recipe-title">
+                  <span className="recipe-name">{recipe.recipe_name}</span>
+                </Card.Title>
+                <Card.Text className="text-center recipe-summary">
+                  <em>{recipe.description}</em>
+                </Card.Text>
+                <div className="recipe-section">
+                  <h5 className="ingredients-heading">Ingredients:</h5>
+                  <ul className="ingredients-list">
+                    {recipe.ingredients.map((ingredient, index) => (
+                      <li key={index}>
+                        {ingredient.quantity} {ingredient.unit} of <span className="ingredient-name">{ingredient.item_name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="recipe-section">
+                  <h5 className="steps-heading">Steps:</h5>
+                  <ol className="steps-list">
+                    {recipe.steps.map((step, index) => (
+                      <li key={index}>{step}</li>
+                    ))}
+                  </ol>
+                </div>
                 {recipe.missing_ingredients.length > 0 && (
-                  <div className="missing-ingredients mt-4">
+                  <div className="recipe-section missing-ingredients mt-4">
                     <h5 className="missing-heading">Missing Ingredients:</h5>
                     <ul>
                       {recipe.missing_ingredients.map((missing, index) => (
                         <li key={index}>
-                          {missing.quantity} {missing.unit} of {missing.item_name}
+                          {missing.quantity} {missing.unit} of <span className="ingredient-name">{missing.item_name}</span>
                         </li>
                       ))}
                     </ul>
@@ -216,21 +224,24 @@ const Recipes = () => {
           <Col md={10}>
             <Card className="shadow-lg chat-card">
               <Card.Body>
-                <Card.Title className="text-center">Chat with the Head Chef 👨‍🍳</Card.Title>
+                <Card.Title className="text-center chat-title">Chat with the Head Chef <span role="img" aria-label="chef">👨‍🍳</span></Card.Title>
                 <div className="chat-box">
                   {chatMessages.map((message, index) => (
-                    <div key={index} className={`chat-message ${message.role}`}> {message.role === 'user' ? 'You' : 'Assistant'}: {message.content}</div>
+                    <div key={index} className={`chat-message ${message.role}`}>
+                      <strong>{message.role === 'user' ? 'You' : 'Assistant'}:</strong> <ReactMarkdown>{message.content}</ReactMarkdown>
+                    </div>
                   ))}
                 </div>
-                <InputGroup>
+                <InputGroup className="chat-input-group mt-3">
                   <Form.Control
                     type="text"
                     placeholder="Ask a question about the recipe..."
                     value={userMessage}
                     onChange={(e) => setUserMessage(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleChatSubmit()}
+                    className="chat-input"
                   />
-                  <Button variant="primary" onClick={handleChatSubmit}>
+                  <Button variant="primary" onClick={handleChatSubmit} className="send-button">
                     <FaPaperPlane />
                   </Button>
                 </InputGroup>

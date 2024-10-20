@@ -87,7 +87,7 @@ function Header() {
     }, []);
 
     return (
-        <Navbar bg="dark" variant="dark" expand="lg">
+        <Navbar bg="dark" variant="dark" expand="lg" className="px-3">
             <Navbar.Brand href="/" className="d-flex align-items-center">
                 <img
                     src={`${process.env.PUBLIC_URL}/logo.png`}
@@ -116,7 +116,7 @@ function Header() {
                     </Nav.Link>
                 </Nav>
                 {isLoggedIn && username ? (
-                    <div className="d-flex align-items-center ml-auto" style={{ position: 'absolute', right: '20px' }}>
+                    <div className="d-flex align-items-center ml-lg-auto mt-3 mt-lg-0">
                         <FaUserCircle style={{ color: 'white', marginRight: '10px', fontSize: '1.5rem' }} />
                         <span style={{ color: 'white', marginRight: '15px', fontWeight: 'bold' }}>{username}</span>
                         <Button variant="outline-light" onClick={handleLogout} className="d-flex align-items-center">
@@ -124,7 +124,7 @@ function Header() {
                         </Button>
                     </div>
                 ) : (
-                    <Button as={Link} to="/login" variant="outline-light" className="d-flex align-items-center ml-auto" style={{ position: 'absolute', right: '20px' }} onClick={() => navigate('/login')}>
+                    <Button as={Link} to="/login" variant="outline-light" className="d-flex align-items-center ml-lg-auto mt-3 mt-lg-0" onClick={() => navigate('/login')}>
                         <FaSignInAlt style={{ marginRight: '5px' }} /> Login
                     </Button>
                 )}

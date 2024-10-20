@@ -71,36 +71,49 @@ const AddItem = () => {
     }
   };
 
-  // Start scanning for barcode
+    // Updated startBarcodeScanner function
   const startBarcodeScanner = () => {
     setError(null); // Clear previous error messages
     setButtonsDisabled(true);
     setLoading(true);
-    Quagga.init({
-      inputStream: {
-        type: 'LiveStream',
-        target: webcamRef.current.video,
-        constraints: {
-          facingMode: 'environment' // Rear camera
+
+    Quagga.init(
+      {
+        inputStream: {
+          type: 'LiveStream',
+          target: webcamRef.current.video,
+          constraints: {
+            facingMode: 'environment', // Rear camera
+          },
+        },
+        decoder: {
+          readers: ['ean_reader'], // EAN Barcode format
         },
       },
-      decoder: {
-        readers: ['ean_reader'], // EAN Barcode format
-      }
-    }, (err) => {
-      if (err) {
-        console.error(err);
-        setError('Error initializing barcode scanner');
+      (err) => {
+        if (err) {
+          console.error(err);
+          setError('Error initializing barcode scanner');
+          setLoading(false);
+          setButtonsDisabled(false);
+          return;
+        }
+        Quagga.start();
         setLoading(false);
-        setButtonsDisabled(false);
-        return;
       }
-      Quagga.start();
-      setLoading(false);
-    });
+    );
+
+    let scanTimeout = setTimeout(() => {
+      if (!barcodeDetected) {
+        Quagga.stop();
+        setError('Unable to detect barcode. Please try again.');
+        setButtonsDisabled(false);
+      }
+    }, 10000); // Retry after 10 seconds if no barcode detected
 
     Quagga.onDetected((data) => {
       if (data && data.codeResult && data.codeResult.code) {
+        clearTimeout(scanTimeout); // Clear the timeout on successful scan
         setBarcodeValue(data.codeResult.code);
         setBarcodeDetected(true);
         Quagga.stop(); // Stop scanner after successful scan

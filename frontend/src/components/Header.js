@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navbar, Nav, Button } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaSignInAlt, FaUserCircle, FaSignOutAlt } from 'react-icons/fa';
+import { FaSignInAlt, FaUserCircle, FaSignOutAlt, FaHome, FaBoxOpen, FaBook, FaPlusCircle } from 'react-icons/fa';
 import axios from 'axios';
 
 function Header() {
@@ -102,10 +102,18 @@ function Header() {
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="mr-auto">
-                    <Nav.Link as={Link} to="/">Home</Nav.Link>
-                    <Nav.Link as={Link} to="/inventory">Inventory</Nav.Link>
-                    <Nav.Link as={Link} to="/recipes">Recipes</Nav.Link>
-                    <Nav.Link as={Link} to="/add-item">Add Groceries</Nav.Link>
+                    <Nav.Link as={Link} to="/" className="d-flex align-items-center">
+                        <FaHome style={{ marginRight: '8px' }} /> Home
+                    </Nav.Link>
+                    <Nav.Link as={Link} to="/inventory" className="d-flex align-items-center">
+                        <FaBoxOpen style={{ marginRight: '8px' }} /> Inventory
+                    </Nav.Link>
+                    <Nav.Link as={Link} to="/recipes" className="d-flex align-items-center">
+                        <FaBook style={{ marginRight: '8px' }} /> Recipes
+                    </Nav.Link>
+                    <Nav.Link as={Link} to="/add-item" className="d-flex align-items-center">
+                        <FaPlusCircle style={{ marginRight: '8px' }} /> Add Groceries
+                    </Nav.Link>
                 </Nav>
                 {isLoggedIn && username ? (
                     <div className="d-flex align-items-center ml-auto" style={{ position: 'absolute', right: '20px' }}>

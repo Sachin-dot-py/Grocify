@@ -93,6 +93,10 @@ const AddItem = () => {
   const handleAddItem = async () => {
     try {
       setError(null); // Clear previous error messages
+      if (!expiryDate) {
+        setError('Please enter an expiry date');
+        return;
+      }
       const token = localStorage.getItem('access_token');
       const response = await axios.post(`${API_BASE_URL}/api/add-item`, {
         barcode: barcodeValue,
@@ -121,7 +125,6 @@ const AddItem = () => {
         throw new Error('Unable to capture image');
       }
       const token = localStorage.getItem('access_token');
-      // const base64Image = imageSrc.split(',')[1]; // Remove data URL prefix
       const response = await axios.post(`${API_BASE_URL}/api/extract-info`, {
         image: imageSrc
       }, {

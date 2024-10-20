@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Button, Container, Row, Col, Spinner, Alert, Modal, Form, InputGroup } from 'react-bootstrap';
+import { Card, Button, Container, Row, Col, Spinner, Alert, Form, InputGroup } from 'react-bootstrap';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { FaUser, FaLock, FaSignInAlt, FaUserPlus } from 'react-icons/fa';
@@ -42,7 +42,7 @@ const Login = () => {
       <Container fluid className="login-container">
         <Row className="justify-content-center align-items-center vh-100">
           <Col md={6} lg={4}>
-            <Card className="shadow-lg border-0">
+            <Card className="shadow-lg border-0 rounded-4">
               <Card.Body className="p-4">
                 <Card.Title className="text-center mb-4" style={{ color: '#343a40', fontSize: '1.8rem' }}>
                   {isLogin ? 'Welcome Back!' : 'Create Your Account'}
@@ -57,6 +57,7 @@ const Login = () => {
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         placeholder="Enter your username"
+                        className="rounded-end"
                       />
                     </InputGroup>
                   </Form.Group>
@@ -69,11 +70,12 @@ const Login = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Enter your password"
+                        className="rounded-end"
                       />
                     </InputGroup>
                   </Form.Group>
-                  {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
-                  <Button className="mt-4 w-100" variant="success" size="lg" onClick={isLogin ? handleLogin : handleSignup}>
+                  {error && <Alert variant="danger" className="mt-3 rounded-3">{error}</Alert>}
+                  <Button className="mt-4 w-100 rounded-pill" variant="success" size="lg" onClick={isLogin ? handleLogin : handleSignup}>
                     {isLogin ? <><FaSignInAlt style={{ marginRight: '5px' }} /> Login</> : <><FaUserPlus style={{ marginRight: '5px' }} /> Sign Up</>}
                   </Button>
                 </Form>

@@ -104,7 +104,7 @@ const Inventory = () => {
         <Col md={10}>
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h2 className="text-center inventory-title">Your Inventory</h2>
-            <Button variant="primary" className="add-item-button" onClick={() => navigate('/add-item')}>
+            <Button variant="primary" className="add-item-button rounded-pill" onClick={() => navigate('/add-item')}>
               <FaCheckCircle className="mr-2" /> Add New Item
             </Button>
           </div>
@@ -114,7 +114,7 @@ const Inventory = () => {
               <p className="mt-3">Loading your inventory...</p>
             </div>
           ) : error ? (
-            <Alert variant="danger" className="text-center">
+            <Alert variant="danger" className="text-center rounded">
               {error}
             </Alert>
           ) : (
@@ -126,21 +126,21 @@ const Inventory = () => {
                   const { variant, percentage, label } = calculateExpiryStatus(item.expiry_date);
                   return (
                     <Col md={4} key={item._id} className="mb-4">
-                      <Card className={`shadow-lg border-${variant} inventory-card`}>
+                      <Card className={`shadow-sm border-${variant} inventory-card rounded-4`}>
                         <Card.Img variant="top" src={item.image} alt={item.item_name} className="inventory-image rounded-top" />
                         <Card.Body className="d-flex flex-column">
                           <Card.Title className="d-flex justify-content-between align-items-center">
-                            {item.item_name} <Badge variant={variant}>{label}</Badge>
+                            {item.item_name} <Badge variant={variant} className="rounded-pill px-2 py-1">{label}</Badge>
                           </Card.Title>
                           <Card.Text className="text-muted mb-2">
                             <FaClock className="mr-1" /> Expiry Date: {new Date(item.expiry_date).toLocaleDateString()}
                           </Card.Text>
-                          <ProgressBar className="mb-3" variant={variant} now={percentage} label={``} />
+                          <ProgressBar className="mb-3 rounded-pill" variant={variant} now={percentage} label={``} />
                           <div className="mt-auto d-flex justify-content-between">
-                            <Button variant="outline-info" size="sm" className="edit-button">
+                            <Button variant="outline-info" size="sm" className="edit-button rounded-pill">
                               <FaEdit className="mr-1" /> Edit
                             </Button>
-                            <Button variant="outline-danger" size="sm" className="delete-button" onClick={() => handleDelete(item._id)}>
+                            <Button variant="outline-danger" size="sm" className="delete-button rounded-pill" onClick={() => handleDelete(item._id)}>
                               <FaTrashAlt className="mr-1" /> Delete
                             </Button>
                           </div>
@@ -155,7 +155,7 @@ const Inventory = () => {
         </Col>
       </Row>
 
-      <Toast onClose={() => setShowToast(false)} show={showToast} delay={3000} autohide style={{ position: 'fixed', bottom: 20, right: 20, backgroundColor: toastVariant === 'success' ? '#d4edda' : '#f8d7da' }}>
+      <Toast onClose={() => setShowToast(false)} show={showToast} delay={3000} autohide style={{ position: 'fixed', bottom: 20, right: 20, backgroundColor: toastVariant === 'success' ? '#d4edda' : '#f8d7da', borderRadius: '10px' }}>
         <Toast.Header>
           {toastIcon}
           <strong className="ml-2 mr-auto">Notification</strong>

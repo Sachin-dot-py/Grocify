@@ -6,6 +6,8 @@ Grocify is an all-in-one food tracking, grocery management, and cooking assistan
 
 Grocify was created as part of Cal Hacks 11.0 in San Francisco. We wanted to challenge ourselves to solve a real-world problem within the hackathon's time constraints, and food waste felt like an issue that resonated with many of us. Over an intense weekend of brainstorming, coding, and testing, we brought Grocify to life, aiming to make grocery management smarter, more sustainable, and accessible to everyone.
 
+Demo Video: https://www.youtube.com/watch?v=3mnrfpyawdU
+
 ## Tech Stack
 
 - **Frontend**: React.js with Bootstrap for styling.
@@ -87,3 +89,13 @@ To update and redeploy your application after making changes, run the provided u
 
 This script pulls the latest code from the repository, rebuilds the frontend, and restarts Nginx and Gunicorn services.
 
+## Screenshots from App
+
+![Turkey Popup](https://github.com/user-attachments/assets/a9e8cd21-dd07-4703-84c4-dfbb89d854a0)
+![Recipe](https://github.com/user-attachments/assets/2044dc25-7aab-4bac-8ae5-2cff3799600d)
+![Recipe Chat](https://github.com/user-attachments/assets/8e0a344a-70e1-44ae-8d8d-7d8534e3d0a3)
+![Inventory](https://github.com/user-attachments/assets/fe4b6037-97e9-455e-b9ea-32128a8c49de)
+![Home Page](https://github.com/user-attachments/assets/e9a205d4-b2b1-40b1-9295-520bea20f9d8)
+![Dietary Restrictions](https://github.com/user-attachments/assets/4c22fa94-c39c-4f9b-bac3-3df62a7d1fa8)
+![Add Item Scanning Popup](https://github.com/user-attachments/assets/595cbd69-8756-4008-899d-79621ad83e05)
+![Add Item Barcode Popup](https://github.com/user-attachments/assets/6700934b-9e08-4419-9b26-54523099c07e)
